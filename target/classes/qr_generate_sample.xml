@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="67759fbf-0650-46f3-8633-0bb5555b98a4" >
+		<http:listener-connection host="0.0.0.0" port="9091" />
+	</http:listener-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="8b2fd0dd-da6d-4655-983e-5d16b53c61f7" file="config\test-properties.yaml" />
+	<flow name="qr_generate_sampleFlow" doc:id="98701b91-f9d1-46b0-ba3a-bc1ab3edfbcd" >
+		<http:listener doc:name="/QR" doc:id="a37b5af1-4727-4e19-a62d-69879ed8449e" config-ref="HTTP_Listener_config" path="/QR"/>
+		<ee:transform doc:name="Transform Message" doc:id="3fe1d3ff-3ccb-4bef-a7c8-5f84e82027e4" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="data" ><![CDATA[%dw 2.0
+output text/plain
+---
+p('code.data')]]></ee:set-variable>
+				<ee:set-variable variableName="path" ><![CDATA[%dw 2.0
+output text/plain
+---
+p('code.path')]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="455963d0-e592-4518-b2b3-2ae3b8523ed0" message="#[vars.data]"/>
+		<java:invoke-static doc:name="Invoke static" doc:id="6aaca096-d243-4168-9734-2c496a388778" class="com.generate.QR.GenerateQRcode" method="createQR(java.lang.String,java.lang.String)">
+			<java:args ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+  data: vars.data,
+  path: vars.path 
+}]]]></java:args>
+		</java:invoke-static>
+		<set-payload value="QR code generated successfully" doc:name="Set Payload" doc:id="c2dd468a-06ad-418b-8db5-9f70f08e260a" />
+	</flow>
+</mule>
